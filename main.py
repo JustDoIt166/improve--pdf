@@ -41,7 +41,7 @@ class ImprovePdf:
                 img = cv2.imread(os.path.join(self.img_path, i), cv2.IMREAD_COLOR)
                 GrayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 # 局部阈值
-                binary2 = cv2.adaptiveThreshold(GrayImage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 105, 5) # 推荐25 10 越小越细节 越小更浅变更深
+                binary2 = cv2.adaptiveThreshold(GrayImage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 55, 15) # 推荐25 10 越小越细节 越小更浅变深
                 # 保存图片
                 cv2.imwrite(os.path.join(self.change_path, i), binary2)
                 print(f"正在二值化第{i}张图片")
@@ -131,7 +131,7 @@ def main():
         pdf_name=pdf_name+('(优化版).pdf'),
         final_pdf= final_pdf
     )
-    optic_elec.get_image(zoom_x=2.0, zoom_y=2.0, rotation_angle=0)#放大倍数 旋转角度
+    optic_elec.get_image(zoom_x=5.0, zoom_y=5.0, rotation_angle=0)#放大倍数 旋转角度，推荐5倍，倍数过小体积小但效果差
     optic_elec.change_image()
     optic_elec.erasure_image(threshold=30)
     optic_elec.png_to_pdf()
