@@ -69,7 +69,7 @@ class ImprovePdf:
                     cv2.imwrite(os.path.join(self.change_path, i), binary2)
                     print(f"正在二值化第{i}张图片")
             print(f"Thread {index} 释放了信号量")
-    def erasure_image(self, threshold):
+    def erasure_image(self, threshold,index):
         # 创建一个信号量，设置最大允许的线程数量为5
         semaphore = threading.Semaphore(self.core)
         with semaphore:
@@ -77,7 +77,8 @@ class ImprovePdf:
             # threshold为设置清除黑点面积阈值
             img_path1 = os.listdir(self.change_path)
             img_path1 = sorted(img_path1, key=self.numerical_sort)
-            for i in img_path1:
+            for i in index:
+                i=img_path1[i]
                 if i.endswith('.png'):
                     img = cv2.imread(os.path.join(self.change_path, i), cv2.IMREAD_COLOR)
                     GrayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -187,7 +188,7 @@ def main():
     threads = []
 
     for i in range(len(index)):  # 这里创建了4个线程，可以根据需要调整
-        thread = threading.Thread(target=optic_elec.change_path)
+        thread = threading.Thread(target=optic_elec.change_image,args=(index[i],))
         threads.append(thread)
         thread.start()# 开始线程
 
@@ -203,21 +204,9 @@ def main():
     for thread in threads:
         thread.join()
 
-    threads = []
-    for i in range(len(index)):
-        thread = threading.Thread(target=optic_elec.png_to_pdf)
-        threads.append(thread)
-        thread.start()
-    for thread in threads:
-        thread.join()
+    optic_elec.png_to_pdf()
 
     optic_elec.merge_pdf()
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
