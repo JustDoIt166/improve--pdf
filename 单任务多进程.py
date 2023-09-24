@@ -104,7 +104,7 @@ class ImprovePdf:
 
     def merge_pdf(self):
         try:
-            pdf_files = natsorted(os.listdir(self.pdf_path))
+            pdf_files = sorted(os.listdir(self.pdf_path),key=self.numerical_sort)
             PDFWriter = fitz.open()
             for pdf in pdf_files:
                 pdf_path = os.path.join(self.pdf_path, pdf)
@@ -118,7 +118,7 @@ class ImprovePdf:
 
 def main():
     start_time = time.time()
-    doc_path = r"C:\Users\17403\Desktop\liser\激光原理与应用（第四版）-1.pdf"
+    doc_path = r"C:\Users\17403\Desktop\zhou\激光原理 -- 周炳琨，高以智，陈倜嵘，陈家骅，霍力编 -- 7, 2014 -- 国防工业出版社 - Anna’s Archive.pdf"
     pdf_name = os.path.basename(doc_path).replace(".pdf", "(优化版).pdf")
 
     optic_elec = ImprovePdf(doc_path, pdf_name)
@@ -172,7 +172,7 @@ def main():
 
     p.close()
     p.join()
-
+    optic_elec.merge_pdf()
     end_time = time.time()
     # 计算程序运行时间
     run_time = end_time - start_time
