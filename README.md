@@ -18,3 +18,5 @@ pip install pymupdf
 ```python
 doc_path = r"your pdf path"#相对路径删去r
 ```
+### 3.运行脚本
+推荐使用单任务多线程，处理速度更快
