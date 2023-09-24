@@ -40,7 +40,7 @@ class ImprovePdf:
 
     def change_image(self):
         try:
-            img_files = sorted(os.listdir(self.img_path),key=self.numerical_sort())
+            img_files = sorted(os.listdir(self.img_path),key=self.numerical_sort)
             for i in img_files:
                 if i.endswith('.png'):
                     img = cv2.imread(os.path.join(self.img_path, i), cv2.IMREAD_COLOR)
