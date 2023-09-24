@@ -102,7 +102,7 @@ class ImprovePdf:
 
 
 def main():
-    doc_path = r"C:\Users\17403\Desktop\java\java程序设计进阶版本.pdf"
+    doc_path = r"C:\Users\17403\Desktop\liser\激光原理与应用（第四版）-1.pdf"
     final_pdf = os.path.dirname(doc_path)
     pdf_path  = os.path.join(os.path.dirname(doc_path), "pdf")
     img_path = os.path.join(os.path.dirname(doc_path), "img")
