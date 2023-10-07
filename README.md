@@ -38,8 +38,8 @@ doc_path = r"your pdf path"  # 相对路径删去r
 
 ### 二值化
 
-![image](image/li1.png)
+![avatar](img/li1.png)
 
 ### portrace矢量化（脚本未集成，可自行下载处理二值化图片体验）
 
-![image](image/li2.png)
+![image](img\li2.png)
