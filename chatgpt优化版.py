@@ -1,7 +1,8 @@
-import fitz
-import cv2
 import os
 import re
+
+import cv2
+import fitz
 
 
 class ImprovePdf:
@@ -22,7 +23,7 @@ class ImprovePdf:
 
     @staticmethod
     def numerical_sort(value):
-        numbers = re.findall(r'\d+', value)
+        numbers = re.findall(r"\d+", value)
         return int(numbers[0]) if numbers else value
 
     def get_image(self, zoom_x, zoom_y, rotation_angle):
@@ -40,13 +41,19 @@ class ImprovePdf:
 
     def change_image(self):
         try:
-            img_files = sorted(os.listdir(self.img_path),key=self.numerical_sort)
+            img_files = sorted(os.listdir(self.img_path), key=self.numerical_sort)
             for i in img_files:
-                if i.endswith('.png'):
+                if i.endswith(".png"):
                     img = cv2.imread(os.path.join(self.img_path, i), cv2.IMREAD_COLOR)
                     GrayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    binary2 = cv2.adaptiveThreshold(GrayImage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                                    cv2.THRESH_BINARY, 55, 15)
+                    binary2 = cv2.adaptiveThreshold(
+                        GrayImage,
+                        255,
+                        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                        cv2.THRESH_BINARY,
+                        55,
+                        15,
+                    )
                     cv2.imwrite(os.path.join(self.change_path, i), binary2)
                     print(f"正在二值化第{i}张图片")
         except Exception as e:
@@ -54,16 +61,22 @@ class ImprovePdf:
 
     def erasure_image(self, threshold):
         try:
-            img_files = sorted(os.listdir(self.change_path),key=self.numerical_sort)
+            img_files = sorted(os.listdir(self.change_path), key=self.numerical_sort)
             for i in img_files:
-                if i.endswith('.png'):
-                    img = cv2.imread(os.path.join(self.change_path, i), cv2.IMREAD_COLOR)
+                if i.endswith(".png"):
+                    img = cv2.imread(
+                        os.path.join(self.change_path, i), cv2.IMREAD_COLOR
+                    )
                     GrayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    contours, hierarch = cv2.findContours(GrayImage, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+                    contours, hierarch = cv2.findContours(
+                        GrayImage, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
+                    )
                     for j in range(len(contours)):
                         area = cv2.contourArea(contours[j])
                         if area < threshold:
-                            cv2.drawContours(img, [contours[j]], -1, (255, 255, 255), thickness=-1)
+                            cv2.drawContours(
+                                img, [contours[j]], -1, (255, 255, 255), thickness=-1
+                            )
                             continue
                     cv2.imwrite(os.path.join(self.erasure_path, i), img)
                     print(f"正在去除第{i}张图片黑点")
@@ -72,8 +85,8 @@ class ImprovePdf:
 
     def png_to_pdf(self):
         try:
-            os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
-            img_files = sorted(os.listdir(self.erasure_path),key=self.numerical_sort)
+            os.environ["NLS_LANG"] = "SIMPLIFIED CHINESE_CHINA.UTF8"
+            img_files = sorted(os.listdir(self.erasure_path), key=self.numerical_sort)
 
             for num, img in enumerate(img_files):
                 with fitz.open() as doc:
@@ -81,7 +94,7 @@ class ImprovePdf:
                     pdf_bytes = img_doc.convert_to_pdf()
                     img_pdf = fitz.open("pdf", pdf_bytes)
                     doc.insert_pdf(img_pdf)
-                    doc.save(os.path.join(self.pdf_path, f'{num}.pdf'))
+                    doc.save(os.path.join(self.pdf_path, f"{num}.pdf"))
                     print(f"正在保存第{num}张pdf")
         except Exception as e:
             print(f"转换图片到PDF时出现错误: {e}")
@@ -111,5 +124,5 @@ def main():
     optic_elec.merge_pdf()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
