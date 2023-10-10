@@ -139,7 +139,7 @@ class ImprovePdf:
 
 def main():
     start_time = time.time()
-    doc_path = r"C:\Users\17403\Desktop\xd\程序员的数学3线性代数.pdf"
+    doc_path = r"C:\Users\17403\Desktop\xd\光电子学与光子学——原理与实践（第二版）_2.pdf"
     pdf_name = os.path.basename(doc_path).replace(".pdf", "(优化版).pdf")
 
     optic_elec = ImprovePdf(doc_path, pdf_name)
@@ -152,20 +152,29 @@ def main():
     for i in index:
         pool.apply_async(optic_elec.get_image, args=(5.0, 5.0, 0, i))
         print(i)
+    pool.close()
+    pool.join()
 
     # 多线程二值化图片
+    pool = Pool(optic_elec.core)  # 创建进程池，并发进程数
     for i in index:
         pool.apply_async(optic_elec.change_image, args=(i,))
         print(i)
+    pool.close()
+    pool.join()
+
     # 多线程去除图片黑点
+    pool = Pool(optic_elec.core)  # 创建进程池，并发进程数
     for i in index:
         pool.apply_async(optic_elec.erasure_image, args=(30, i))
         print(i)
+    pool.close()
+    pool.join()
     # 多线程转换图片到PDF
+    pool = Pool(optic_elec.core)  # 创建进程池，并发进程数
     for i in index:
         pool.apply_async(optic_elec.png_to_pdf, args=(i,))
         print(i)
-
     pool.close()
     pool.join()
     optic_elec.merge_pdf()
