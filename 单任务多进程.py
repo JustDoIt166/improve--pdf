@@ -147,6 +147,7 @@ def main():
     index = optic_elec.cont_index()
 
     pool = Pool(optic_elec.core)  # 创建进程池，并发进程数
+    print(f"你的CPU核心数为: {optic_elec.core}")
     # 多线程提取图片
     for i in index:
         pool.apply_async(optic_elec.get_image, args=(5.0, 5.0, 0, i))
