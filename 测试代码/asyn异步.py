@@ -1,17 +1,13 @@
+import fitz
+import cv2
 import os
 import re
+import asyncio
 import time
-from multiprocessing import Pool
-
-import cv2
-import fitz
-
-
 class ImprovePdf:
     def __init__(self, doc_path, pdf_name):
         self.doc_path = doc_path
         self.pdf_name = pdf_name
-        self.core = os.cpu_count()
 
         # 创建相关目录
         self.final_pdf = os.path.dirname(doc_path)
@@ -27,106 +23,82 @@ class ImprovePdf:
     def cont_index(self):
         pdf = fitz.open(self.doc_path)
         index = []
-        t = pdf.page_count // self.core
-        for pg in range(0, pdf.page_count, t):
-            x = min(pg + t, pdf.page_count)
+        for pg in range(0, pdf.page_count, 10):
+            x = min(pg + 10, pdf.page_count)
             list1 = list(range(pg, x))
             index.append(list1)
             # print(list1)
         return index
-
     @staticmethod
     def numerical_sort(value):
-        numbers = re.findall(r"\d+", value)
+        numbers = re.findall(r'\d+', value)
         return int(numbers[0]) if numbers else value
 
-    def get_image(self, zoom_x, zoom_y, rotation_angle, index):
+    def get_image(self, zoom_x, zoom_y, rotation_angle):
         try:
             pdf = fitz.open(self.doc_path)
-            # pdf转图片
-            for pg in index:
+            for pg in range(len(pdf)):
                 page = pdf[pg]
-                # 设置缩放和旋转系数
                 trans = fitz.Matrix(zoom_x, zoom_y).prerotate(rotation_angle)
                 pm = page.get_pixmap(matrix=trans, alpha=False)
-                # 开始写图像
-                pm.save(os.path.join(self.img_path, str(pg) + ".png"))
+                pm.save(os.path.join(self.img_path, f"{pg}.png"))
                 print(f"正在提取第{pg}张图片")
             pdf.close()
         except Exception as e:
             print(f"提取图片时出现错误: {e}")
 
-    def change_image(self, index):
+    def change_image(self,index):
         try:
-            img_files = sorted(os.listdir(self.img_path), key=self.numerical_sort)
+            img_files = sorted(os.listdir(self.img_path),key=self.numerical_sort)
             for i in index:
-                i = img_files[i]
-                if i.endswith(".png"):
+                i=img_files[i]
+                if i.endswith('.png'):
                     img = cv2.imread(os.path.join(self.img_path, i), cv2.IMREAD_COLOR)
                     GrayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    binary2 = cv2.adaptiveThreshold(
-                        GrayImage,
-                        255,
-                        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                        cv2.THRESH_BINARY,
-                        55,
-                        15,
-                    )
+                    binary2 = cv2.adaptiveThreshold(GrayImage, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                                    cv2.THRESH_BINARY, 55, 15)
                     cv2.imwrite(os.path.join(self.change_path, i), binary2)
                     print(f"正在二值化第{i}张图片")
         except Exception as e:
             print(f"二值化图片时出现错误: {e}")
 
-    def erasure_image(self, threshold, index):
+    def erasure_image(self, threshold):
         try:
-            img_files = sorted(os.listdir(self.change_path), key=self.numerical_sort)
-            for i in index:
-                i = img_files[i]
-                if i.endswith(".png"):
-                    img = cv2.imread(
-                        os.path.join(self.change_path, i), cv2.IMREAD_COLOR
-                    )
+            img_files = sorted(os.listdir(self.change_path),key=self.numerical_sort)
+            for i in img_files:
+                if i.endswith('.png'):
+                    img = cv2.imread(os.path.join(self.change_path, i), cv2.IMREAD_COLOR)
                     GrayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    contours, hierarch = cv2.findContours(
-                        GrayImage, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
-                    )
+                    contours, hierarch = cv2.findContours(GrayImage, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
                     for j in range(len(contours)):
                         area = cv2.contourArea(contours[j])
                         if area < threshold:
-                            cv2.drawContours(
-                                img, [contours[j]], -1, (255, 255, 255), thickness=-1
-                            )
+                            cv2.drawContours(img, [contours[j]], -1, (255, 255, 255), thickness=-1)
                             continue
-                    cv2.imwrite(
-                        os.path.join(self.erasure_path, i),
-                        img,
-                        [cv2.IMWRITE_PNG_COMPRESSION, 9],
-                    )
+                    cv2.imwrite(os.path.join(self.erasure_path, i), img)
                     print(f"正在去除第{i}张图片黑点")
         except Exception as e:
             print(f"去除黑点时出现错误: {e}")
 
-    def png_to_pdf(self, index):
+    def png_to_pdf(self):
         try:
-            os.environ["NLS_LANG"] = "SIMPLIFIED CHINESE_CHINA.UTF8"
-            img_files = sorted(os.listdir(self.erasure_path), key=self.numerical_sort)
+            os.environ['NLS_LANG'] = 'SIMPLIFIED CHINESE_CHINA.UTF8'
+            img_files = sorted(os.listdir(self.erasure_path),key=self.numerical_sort)
 
-            for i in index:
-                num = i
-                i = img_files[i]
+            for num, img in enumerate(img_files):
                 with fitz.open() as doc:
-                    img_doc = fitz.open(os.path.join(self.erasure_path, i))
+                    img_doc = fitz.open(os.path.join(self.erasure_path, img))
                     pdf_bytes = img_doc.convert_to_pdf()
                     img_pdf = fitz.open("pdf", pdf_bytes)
                     doc.insert_pdf(img_pdf)
-                    doc.save(os.path.join(self.pdf_path, f"{num}.pdf"))
+                    doc.save(os.path.join(self.pdf_path, f'{num}.pdf'))
                     print(f"正在保存第{num}张pdf")
         except Exception as e:
             print(f"转换图片到PDF时出现错误: {e}")
 
     def merge_pdf(self):
         try:
-            pdf_files = sorted(os.listdir(self.pdf_path), key=self.numerical_sort)
+            pdf_files = natsorted(os.listdir(self.pdf_path))
             PDFWriter = fitz.open()
             for pdf in pdf_files:
                 pdf_path = os.path.join(self.pdf_path, pdf)
@@ -137,37 +109,35 @@ class ImprovePdf:
             print(f"合并PDF时出现错误: {e}")
 
 
-def main():
+
+async def main():
     start_time = time.time()
-    doc_path = r"C:\Users\17403\Desktop\xd\程序员的数学3线性代数.pdf"
+    doc_path = r"C:\Users\17403\Desktop\liser\激光原理与应用（第四版）-1.pdf"
     pdf_name = os.path.basename(doc_path).replace(".pdf", "(优化版).pdf")
 
     optic_elec = ImprovePdf(doc_path, pdf_name)
+    # optic_elec.get_image(zoom_x=5.0, zoom_y=5.0, rotation_angle=0)
+    # optic_elec.change_image()
+    # optic_elec.erasure_image(threshold=30)
+    # optic_elec.png_to_pdf()
+    # optic_elec.merge_pdf()
+    index=optic_elec.cont_index()
 
-    index = optic_elec.cont_index()
+    for i in range(0,len(index),10):
+        tasks = []
+        for j in range(i,i+10):
+            if j < len(index):
+                j=index[j]
+                tasks.append(optic_elec.change_image(j))
+            else:
+                pass
+        try:
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            print(f"异步出现错误: {e}")
+    # optic_elec.merge_pdf()
 
-    pool = Pool(optic_elec.core)  # 创建进程池，并发进程数
-    # 多线程提取图片
-    for i in index:
-        pool.apply_async(optic_elec.get_image, args=(5.0, 5.0, 0, i))
-        print(i)
-
-    # 多线程二值化图片
-    for i in index:
-        pool.apply_async(optic_elec.change_image, args=(i,))
-        print(i)
-    # 多线程去除图片黑点
-    for i in index:
-        pool.apply_async(optic_elec.erasure_image, args=(30, i))
-        print(i)
-    # 多线程转换图片到PDF
-    for i in index:
-        pool.apply_async(optic_elec.png_to_pdf, args=(i,))
-        print(i)
-
-    pool.close()
-    pool.join()
-    optic_elec.merge_pdf()
+    print(index)
     end_time = time.time()
     # 计算程序运行时间
     run_time = end_time - start_time
@@ -175,5 +145,5 @@ def main():
     print(f"程序运行时间为: {run_time} 秒")
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    asyncio.run(main())

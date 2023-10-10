@@ -11,7 +11,6 @@ class ImprovePdf:
     def __init__(self, doc_path, pdf_name):
         self.doc_path = doc_path
         self.pdf_name = pdf_name
-        self.core = os.cpu_count()
 
         # 创建相关目录
         self.final_pdf = os.path.dirname(doc_path)
@@ -27,9 +26,8 @@ class ImprovePdf:
     def cont_index(self):
         pdf = fitz.open(self.doc_path)
         index = []
-        t = pdf.page_count // self.core
-        for pg in range(0, pdf.page_count, t):
-            x = min(pg + t, pdf.page_count)
+        for pg in range(0, pdf.page_count, 10):
+            x = min(pg + 10, pdf.page_count)
             list1 = list(range(pg, x))
             index.append(list1)
             # print(list1)
@@ -146,27 +144,59 @@ def main():
 
     index = optic_elec.cont_index()
 
-    pool = Pool(optic_elec.core)  # 创建进程池，并发进程数
+    p = Pool(4)  # 创建进程池，并发进程数
     # 多线程提取图片
     for i in index:
         pool.apply_async(optic_elec.get_image, args=(5.0, 5.0, 0, i))
         print(i)
 
-    # 多线程二值化图片
-    for i in index:
-        pool.apply_async(optic_elec.change_image, args=(i,))
-        print(i)
-    # 多线程去除图片黑点
-    for i in index:
-        pool.apply_async(optic_elec.erasure_image, args=(30, i))
-        print(i)
-    # 多线程转换图片到PDF
-    for i in index:
-        pool.apply_async(optic_elec.png_to_pdf, args=(i,))
-        print(i)
+    try:
+        for i in range(0, len(index), 4):
+            for j in range(i, i + 4):
+                if j < len(index):
+                    i = index[j]
+                    print(i)
+                    p.apply_async(optic_elec.change_image, (i,))
 
-    pool.close()
-    pool.join()
+                else:
+                    pass
+
+    except Exception as e:
+        print(f"二值化出现错误: {e}")
+
+    try:
+        for i in range(0, len(index), 10):
+            tasks = []
+            for j in range(i, i + 10):
+                if j < len(index):
+                    j = index[j]
+                    p.apply_async(
+                        optic_elec.erasure_image,
+                        (
+                            30,
+                            j,
+                        ),
+                    )
+                else:
+                    pass
+
+    except Exception as e:
+        print(f"去除出现错误: {e}")
+
+    try:
+        for i in range(0, len(index), 10):
+            tasks = []
+            for j in range(i, i + 10):
+                if j < len(index):
+                    j = index[j]
+                    p.apply_async(optic_elec.png_to_pdf, (j,))
+                else:
+                    pass
+    except Exception as e:
+        print(f"转pdf出现错误: {e}")
+
+    p.close()
+    p.join()
     optic_elec.merge_pdf()
     end_time = time.time()
     # 计算程序运行时间
