@@ -9,7 +9,7 @@ class ImprovePdf:
     def __init__(self, doc_path, pdf_name):
         self.doc_path = doc_path
         self.pdf_name = pdf_name
-
+        self.pagination = None
         # 创建相关目录
         self.final_pdf = os.path.dirname(doc_path)
         self.pdf_path = os.path.join(self.final_pdf, "pdf")
@@ -29,6 +29,8 @@ class ImprovePdf:
     def get_image(self, zoom_x, zoom_y, rotation_angle):
         try:
             pdf = fitz.open(self.doc_path)
+            self.pagination = pdf.get_toc()
+            print(self.pagination)
             for pg in range(len(pdf)):
                 page = pdf[pg]
                 trans = fitz.Matrix(zoom_x, zoom_y).prerotate(rotation_angle)
@@ -107,6 +109,7 @@ class ImprovePdf:
                 pdf_path = os.path.join(self.pdf_path, pdf)
                 pdf_doc = fitz.open(pdf_path)
                 PDFWriter.insert_pdf(pdf_doc)
+            PDFWriter.set_toc(self.pagination)
             PDFWriter.save(os.path.join(self.final_pdf, self.pdf_name))
         except Exception as e:
             print(f"合并PDF时出现错误: {e}")
