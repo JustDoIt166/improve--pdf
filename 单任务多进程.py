@@ -12,7 +12,7 @@ class ImprovePdf:
         self.doc_path = doc_path
         self.pdf_name = pdf_name
         self.core = os.cpu_count()
-
+        self.pagination = None
         # 创建相关目录
         self.final_pdf = os.path.dirname(doc_path)
         self.pdf_path = os.path.join(self.final_pdf, "pdf")
@@ -41,6 +41,9 @@ class ImprovePdf:
         return int(numbers[0]) if numbers else value
 
     def get_image(self, zoom_x, zoom_y, rotation_angle, index):
+        pdf = fitz.open(self.doc_path)
+        self.pagination = pdf.get_toc()
+        print(self.pagination)
         try:
             pdf = fitz.open(self.doc_path)
             # pdf转图片
@@ -132,6 +135,7 @@ class ImprovePdf:
                 pdf_path = os.path.join(self.pdf_path, pdf)
                 pdf_doc = fitz.open(pdf_path)
                 PDFWriter.insert_pdf(pdf_doc)
+            PDFWriter.set_toc(self.pagination)
             PDFWriter.save(os.path.join(self.final_pdf, self.pdf_name))
         except Exception as e:
             print(f"合并PDF时出现错误: {e}")
