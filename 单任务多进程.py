@@ -40,10 +40,22 @@ class ImprovePdf:
         numbers = re.findall(r"\d+", value)
         return int(numbers[0]) if numbers else value
 
-    def get_image(self, zoom_x, zoom_y, rotation_angle, index):
+    def get_doc(self):
         pdf = fitz.open(self.doc_path)
         self.pagination = pdf.get_toc()
-        print(self.pagination)
+
+        if not self.pagination:
+            try:
+                with open("toc.txt", "r", encoding="utf-8") as f:
+                    self.pagination = list(f)
+            except Exception as e:
+                print(f"读取目录时出现错误: {e}")
+        else:
+            print("目录读取成功")
+            print(self.pagination)
+        pdf.close()
+
+    def get_image(self, zoom_x, zoom_y, rotation_angle, index):
         try:
             pdf = fitz.open(self.doc_path)
             # pdf转图片
